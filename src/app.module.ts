@@ -8,10 +8,15 @@ import { Zone } from './zones/zone.entity';
 import { ZonePolicy } from './policies/zone-policy.entity';
 import { ScreenGroup } from './groups/screen-group.entity';
 import { HealthController } from './common/health.controller';
+import { appConfig, dbConfig, validate } from './config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig, dbConfig],
+      validate,
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL || 'postgresql://campuscast:campuscast@localhost:5432/zone_policy_db',
