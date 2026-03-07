@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Query, Body } from '@nestjs/common';
 import { ZonesService } from './zones.service';
 
 @Controller('zones')
@@ -19,5 +19,15 @@ export class ZonesController {
   @Post()
   async create(@Body() body: { name: string; description?: string }) {
     return this.svc.create(body);
+  }
+
+  @Put(':zoneId')
+  async update(@Param('zoneId') zoneId: string, @Body() body: { name?: string; description?: string }) {
+    return this.svc.update(zoneId, body);
+  }
+
+  @Delete(':zoneId')
+  async remove(@Param('zoneId') zoneId: string) {
+    return this.svc.remove(zoneId);
   }
 }
