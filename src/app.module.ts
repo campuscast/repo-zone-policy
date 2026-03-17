@@ -8,8 +8,12 @@ import { GroupsModule } from './groups/groups.module';
 import { Zone } from './zones/zone.entity';
 import { ZonePolicy } from './policies/zone-policy.entity';
 import { ScreenGroup } from './groups/screen-group.entity';
+import { Init1700000000000 } from './migrations/1700000000000-Init';
 import { HealthController } from './common/health.controller';
 import { appConfig, dbConfig, validate } from './config';
+
+const dbSynchronize = process.env.DB_SYNCHRONIZE === 'true';
+const dbMigrationsRun = process.env.DB_MIGRATIONS_RUN !== 'false';
 
 @Module({
   imports: [
@@ -22,7 +26,10 @@ import { appConfig, dbConfig, validate } from './config';
       type: 'postgres',
       url: process.env.DATABASE_URL || 'postgresql://campuscast:campuscast@localhost:5432/zone_policy_db',
       entities: [Zone, ZonePolicy, ScreenGroup],
-      synchronize: process.env.NODE_ENV === 'development',
+      migrations: [Init1700000000000],
+      migrationsRun: dbMigrationsRun,
+      synchronize: dbSynchronize,
+      logging: process.env.NODE_ENV === 'development',
     }),
     ZonesModule, PoliciesModule, GroupsModule,
       MetricsModule,
