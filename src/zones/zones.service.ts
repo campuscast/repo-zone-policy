@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Zone } from './zone.entity';
@@ -6,6 +6,7 @@ import { AuditClient } from '@campuscast/shared-libs';
 
 @Injectable()
 export class ZonesService {
+  private static readonly MAX_ZONE_NAME_LENGTH = 40;
   private readonly logger = new Logger(ZonesService.name);
   private readonly auditClient = new AuditClient();
   private readonly syncServiceUrl = process.env.SYNC_SERVICE_URL || 'http://localhost:3006';
@@ -23,7 +24,21 @@ export class ZonesService {
   }
 
   async create(data: Partial<Zone>) {
-    const zone = await this.repo.save(this.repo.create(data));
+    const normalizedName = String(data.name || '').trim();
+    if (!normalizedName) {
+      throw new BadRequestException('Zone name is required');
+    }
+    if (normalizedName.length > ZonesService.MAX_ZONE_NAME_LENGTH) {
+      throw new BadRequestException(`Zone name must be at most ${ZonesService.MAX_ZONE_NAME_LENGTH} characters`);
+    }
+
+    const normalizedDescription = typeof data.description === 'string' ? data.description.trim() : undefined;
+
+    const zone = await this.repo.save(this.repo.create({
+      ...data,
+      name: normalizedName,
+      description: normalizedDescription,
+    }));
     this.auditClient.append({
       event_type: 'zone.created',
       actor_type: 'system',
@@ -39,7 +54,22 @@ export class ZonesService {
 
   async update(zoneId: string, data: Partial<Zone>) {
     const zone = await this.findOne(zoneId);
-    Object.assign(zone, data);
+
+    if (data.name !== undefined) {
+      const normalizedName = String(data.name || '').trim();
+      if (!normalizedName) {
+        throw new BadRequestException('Zone name is required');
+      }
+      if (normalizedName.length > ZonesService.MAX_ZONE_NAME_LENGTH) {
+        throw new BadRequestException(`Zone name must be at most ${ZonesService.MAX_ZONE_NAME_LENGTH} characters`);
+      }
+      zone.name = normalizedName;
+    }
+
+    if (data.description !== undefined) {
+      zone.description = String(data.description || '').trim();
+    }
+
     const saved = await this.repo.save(zone);
     this.auditClient.append({
       event_type: 'zone.updated',
