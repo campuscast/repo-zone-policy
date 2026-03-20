@@ -10,6 +10,7 @@ export class ZonesService {
   private readonly logger = new Logger(ZonesService.name);
   private readonly auditClient = new AuditClient();
   private readonly syncServiceUrl = process.env.SYNC_SERVICE_URL || 'http://localhost:3006';
+  private readonly deviceMgmtUrl = process.env.DEVICE_MANAGEMENT_URL || 'http://localhost:3004';
 
   constructor(@InjectRepository(Zone) private repo: Repository<Zone>) {}
 
@@ -96,6 +97,7 @@ export class ZonesService {
       resource_id: zoneId,
       action: 'zone_deleted',
     });
+    await this.syncZoneToDeviceManagement(zoneId, 'deleted');
     return { deleted: true };
   }
 
@@ -110,6 +112,19 @@ export class ZonesService {
       });
     } catch (err) {
       this.logger.warn(`MQTT config push failed: ${(err as Error).message}`);
+    }
+  }
+
+  private async syncZoneToDeviceManagement(zoneId: string, action: string) {
+    try {
+      await fetch(`${this.deviceMgmtUrl}/devices/sync-zone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone_id: zoneId, action }),
+        signal: AbortSignal.timeout(3000),
+      });
+    } catch (err) {
+      this.logger.warn(`Device-zone sync failed: ${(err as Error).message}`);
     }
   }
 }

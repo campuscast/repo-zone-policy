@@ -18,8 +18,12 @@ export class GroupsController {
   }
 
   @Post()
-  async create(@Param('zoneId') zoneId: string, @Body() body: { name: string }) {
-    const group = await this.repo.save(this.repo.create({ zone_id: zoneId, name: body.name }));
+  async create(@Param('zoneId') zoneId: string, @Body() body: { name: string; description?: string }) {
+    const group = await this.repo.save(this.repo.create({
+      zone_id: zoneId,
+      name: body.name,
+      description: body.description?.trim() || null,
+    }));
     this.auditClient.append({
       event_type: 'group.created',
       actor_type: 'system',
@@ -28,7 +32,7 @@ export class GroupsController {
       resource_type: 'screen_group',
       resource_id: group.group_id,
       action: 'group_created',
-      detail: { name: group.name },
+      detail: { name: group.name, description: group.description || '' },
     });
     // Notify device-management of new group
     await this.syncGroupToDeviceManagement(zoneId, group.group_id, 'created');
