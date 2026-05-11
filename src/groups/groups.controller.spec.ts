@@ -38,4 +38,46 @@ describe('GroupsController', () => {
     });
     expect(result.description).toBe('Main entry display');
   });
+
+  it('normalizes and stores layout items', async () => {
+    repo.findOne.mockResolvedValue({
+      group_id: 'group-1',
+      zone_id: 'zone-1',
+      name: 'Lobby',
+      description: null,
+      layout_items: [],
+    });
+    repo.save.mockImplementation(async (value) => value);
+
+    const result = await controller.updateLayout('zone-1', 'group-1', {
+      items: [
+        {
+          device_id: 'device-1',
+          display_id: 'display-a',
+          x: 10.4,
+          y: -14.8,
+          width: 1920,
+          height: 1080,
+        },
+      ],
+    });
+
+    expect(repo.save).toHaveBeenCalledWith({
+      group_id: 'group-1',
+      zone_id: 'zone-1',
+      name: 'Lobby',
+      description: null,
+      layout_items: [
+        {
+          device_id: 'device-1',
+          display_id: 'display-a',
+          x: 10,
+          y: -15,
+          width: 1920,
+          height: 1080,
+        },
+      ],
+    });
+    expect(result.layout_items).toHaveLength(1);
+  });
 });

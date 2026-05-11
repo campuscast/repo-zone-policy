@@ -10,6 +10,7 @@ import { ZonePolicy } from './policies/zone-policy.entity';
 import { ScreenGroup } from './groups/screen-group.entity';
 import { Init1700000000000 } from './migrations/1700000000000-Init';
 import { AddScreenGroupDescription1700000000001 } from './migrations/1700000000001-AddScreenGroupDescription';
+import { AddScreenGroupLayout1700000000002 } from './migrations/1700000000002-AddScreenGroupLayout';
 import { HealthController } from './common/health.controller';
 import { appConfig, dbConfig, validate } from './config';
 
@@ -27,7 +28,7 @@ const dbMigrationsRun = process.env.DB_MIGRATIONS_RUN !== 'false';
       type: 'postgres',
       url: process.env.DATABASE_URL || 'postgresql://campuscast:campuscast@localhost:5432/zone_policy_db',
       entities: [Zone, ZonePolicy, ScreenGroup],
-      migrations: [Init1700000000000, AddScreenGroupDescription1700000000001],
+      migrations: [Init1700000000000, AddScreenGroupDescription1700000000001, AddScreenGroupLayout1700000000002],
       migrationsRun: dbMigrationsRun,
       synchronize: dbSynchronize,
       logging: process.env.NODE_ENV === 'development',
